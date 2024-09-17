@@ -1,6 +1,5 @@
 import * as winston from 'winston'
 
-
 /**
  * Create a logger instance to write log messages in JSON format.
  *

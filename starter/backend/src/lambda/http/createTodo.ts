@@ -3,15 +3,16 @@ import 'source-map-support/register'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
+import { createTodo } from '../../businessLogic/todos'
 import { getUserId } from '../utils';
-import { createTodo } from '../../businessLogicLayer/todos'
 
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const newTodo: CreateTodoRequest = JSON.parse(event.body)
     // TODO: Implement creating a new TODO item
-    const userId = getUserId(event)
-    const newItem = await createTodo(newTodo, userId)
+    const userId = getUserId(event);
+    console.log('Create by user: ', userId)
+    const item = await createTodo(newTodo, userId)
   
     return {
       statusCode: 201,
@@ -20,11 +21,10 @@ export const handler = middy(
         'Access-Control-Allow-Credentials': true
       },
       body: JSON.stringify({
-        item: newItem
+        item: item
       })
     }
   }
- //   return undefined
 )
 
 handler.use(

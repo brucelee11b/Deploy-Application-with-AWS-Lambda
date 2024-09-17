@@ -1,8 +1,10 @@
+//Todo Dto
 export interface Todo {
   todoId: string
-  createdAt: string
   name: string
+  attachmentUrl?: string
+  createdAt: string
   dueDate: string
   done: boolean
-  attachmentUrl?: string
+  
 }

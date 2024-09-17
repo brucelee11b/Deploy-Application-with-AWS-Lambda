@@ -17,7 +17,6 @@ import {
 import { createTodo, deleteTodo, getTodos, patchTodo } from '../api/todos-api'
 import Auth from '../auth/Auth'
 import { Todo } from '../types/Todo'
-import Swal from 'sweetalert2'
 
 interface TodosProps {
   auth: Auth
@@ -45,9 +44,9 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     this.props.history.push(`/todos/${todoId}/edit`)
   }
 
-  onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
+  onCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
-      const dueDate = this.calculateDueDate()
+      const dueDate = this.formatDate()
       const newTodo = await createTodo(this.props.auth.getIdToken(), {
         name: this.state.newTodoName,
         dueDate
@@ -56,49 +55,31 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         todos: [...this.state.todos, newTodo],
         newTodoName: ''
       })
-      Swal.fire({
-        position: 'top-end',
-        icon: 'success',
-        title: `${newTodo.name} has been create`,
-        showConfirmButton: false,
-        timer: 1500
-      })
     } catch {
       alert('Todo creation failed')
     }
   }
 
-  onTodoDelete = async (todoId: string) => {
+  
+  formatDate(): string {
+    const date = new Date()
+    date.setDate(date.getDate())
+
+    return dateFormat(date, 'yyyy-mm-dd') as string
+  }
+
+  onDelete = async (todoId: string) => {
     try {
       await deleteTodo(this.props.auth.getIdToken(), todoId)
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-        
-          this.setState({
-            todos: this.state.todos.filter(todo => todo.todoId !== todoId)
-
-          })
-          Swal.fire(
-            'Deleted!',
-            'Your task has been deleted.',
-            'success'
-          )
-        }
+      this.setState({
+        todos: this.state.todos.filter(todo => todo.todoId !== todoId)
       })
     } catch {
       alert('Todo deletion failed')
     }
   }
 
-  onTodoCheck = async (pos: number) => {
+  onCheck = async (pos: number) => {
     try {
       const todo = this.state.todos[pos]
       await patchTodo(this.props.auth.getIdToken(), todo.todoId, {
@@ -150,7 +131,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
               labelPosition: 'left',
               icon: 'add',
               content: 'New task',
-              onClick: this.onTodoCreate
+              onClick: this.onCreate
             }}
             fluid
             actionPosition="left"
@@ -169,6 +150,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     if (this.state.loadingTodos) {
       return this.renderLoading()
     }
+
     return this.renderTodosList()
   }
 
@@ -190,7 +172,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
             <Grid.Row key={todo.todoId}>
               <Grid.Column width={1} verticalAlign="middle">
                 <Checkbox
-                  onChange={() => this.onTodoCheck(pos)}
+                  onChange={() => this.onCheck(pos)}
                   checked={todo.done}
                 />
               </Grid.Column>
@@ -213,7 +195,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                 <Button
                   icon
                   color="red"
-                  onClick={() => this.onTodoDelete(todo.todoId)}
+                  onClick={() => this.onDelete(todo.todoId)}
                 >
                   <Icon name="delete" />
                 </Button>
@@ -229,12 +211,5 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         })}
       </Grid>
     )
-  }
-
-  calculateDueDate(): string {
-    const date = new Date()
-    date.setDate(date.getDate() + 7)
-
-    return dateFormat(date, 'yyyy-mm-dd') as string
   }
 }

@@ -1,8 +1,8 @@
 # TODO: Change the name of the org 
-org: nguyenvanauvietnam
-app: serverless-todo-app-1
-service: serverless-todo-app-1
-frameworkVersion: '3.38.0'
+org: ducanh1208
+app: serverless-service
+service: serverless-service
+frameworkVersion: "3"
 
 plugins:
   - serverless-webpack
@@ -11,46 +11,40 @@ plugins:
   - serverless-reqvalidator-plugin
   - serverless-aws-documentation
 
+
+# Use these variables in the functions and resouorces section below. For example, 
+  environment:
+    TODOS_TABLE: serverless-ver1-service-${self:provider.stage}
+    TODOS_CREATED_AT_INDEX: CreatedAtIndex
+    ATTACHMENT_S3_BUCKET: serverless-ver1-service-images-${self:provider.stage}
+    SIGNED_URL_EXPIRATION: 300
+    PROJECT_NAME: serverless-todo-app
+    INDEX_NAME: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
+
+logs:
+  # Enable API Gateway logs
+  restApi: true
+
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs14.x
+  lambdaHashingVersion: '20201221'
+
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   profile: default
-  
+
   tracing:
     lambda: true
     apiGateway: true
-  
-  # Use these variables in the functions and resouorces section below. For example, 
-  # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
-  environment:
-    TODOS_TABLE: Serverless-v1-todo-app-1-${self:provider.stage}
-    TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: serverless-v1-todo-app-1-images-${self:provider.stage}
-    SIGNED_URL_EXPIRATION: 300
-    PROJECT_NAME: serverless-todo-app-1
-    INDEX_NAME: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
-
-  logs:
-    # Enable API Gateway logs
-    restApi: true
-
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - xray:PutTelemetryRecords
-          Resource: "*"
 
 custom:
   documentation:
     api:
       info:
         version: v1.0.0
-        title: Serverless Application Todo API
-        description: Serverless application for todos
+        title: Todo APP
+        description: Serverless application Todo app
     models:
       - name: CreateTodoRequest
         contentType: application/json
@@ -58,6 +52,7 @@ custom:
       - name: UpdateTodoRequest
         contentType: application/json
         schema: ${file(models/update-todo-model.json)}
+
 
 functions:
 
@@ -87,7 +82,7 @@ functions:
       - Effect: "Allow"
         Action:
           - xray:PutTelemetryRecords
-          - xray:PutTraceSegments
+          # - xray:PutTraceSegments
         Resource: "*"
 
   # TODO: Configure this function - 
@@ -152,6 +147,7 @@ functions:
           - xray:PutTelemetryRecords
         Resource: 
           - '*'
+
   # TODO: Configure this function
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   DeleteTodo:
@@ -174,15 +170,13 @@ functions:
           - xray:PutTelemetryRecords
         Resource: 
           - '*'
-
   # TODO: Configure this function
-  # Provide property for setting up CORS, Authorizer, iamRoleStatements
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
       - http:
           method: post
-          path: todos/{todoId}/attachment
+          path: todos/{todoId}/attachment          
           cors: true
           authorizer: Auth
     iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-generate-s3-url-todo-role-${self:provider.stage}
@@ -204,9 +198,7 @@ functions:
 
 resources:
   Resources:
-    # Add necessary AWS resources. You will need at least the following AWS resources
     # TODO: Fill the properties
-    # Feel free to change the names as you like. 
     GatewayResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
@@ -228,7 +220,7 @@ resources:
         ResponseType: DEFAULT_5XX
         RestApiId:
           Ref: ApiGatewayRestApi
-    
+
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
       Properties:
@@ -237,7 +229,7 @@ resources:
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
         ValidateRequestParameters: false
-        
+    
     # TODO: Create a DynamoDB table with local secondary index and a composite key
     TodosDynamoDBTable:
       Type: AWS::DynamoDB::Table
@@ -265,8 +257,8 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+
     # TODO: Complete the bucket properties below. 
-    # Do not forget to add the CorsConfiguration propoerty
     AttachmentsBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -289,6 +281,7 @@ resources:
                 - DELETE
                 - HEAD
               MaxAge: 3000
+  
     # TODO: Complete the policy below and attach it to the bucket defined above
     # For cross referencing the name of the bucket, use "!Ref AttachmentsBucket"
     BucketPolicy:

@@ -4,6 +4,7 @@ import { CreateTodoRequest } from '../types/CreateTodoRequest';
 import Axios from 'axios'
 import { UpdateTodoRequest } from '../types/UpdateTodoRequest';
 
+//GetTodos
 export async function getTodos(idToken: string): Promise<Todo[]> {
   console.log('Fetching todos')
 
@@ -13,10 +14,11 @@ export async function getTodos(idToken: string): Promise<Todo[]> {
       'Authorization': `Bearer ${idToken}`
     },
   })
-  console.log('Todos:', response.data)
+  console.log('List Todo:', response.data)//Log
   return response.data.items
 }
 
+//CreateTodo
 export async function createTodo(
   idToken: string,
   newTodo: CreateTodoRequest
@@ -30,6 +32,21 @@ export async function createTodo(
   return response.data.item
 }
 
+
+//DeleteTodo
+export async function deleteTodo(
+  idToken: string,
+  todoId: string
+): Promise<void> {
+  await Axios.delete(`${apiEndpoint}/todos/${todoId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+}
+
+//PatchTodo
 export async function patchTodo(
   idToken: string,
   todoId: string,
@@ -43,18 +60,13 @@ export async function patchTodo(
   })
 }
 
-export async function deleteTodo(
-  idToken: string,
-  todoId: string
-): Promise<void> {
-  await Axios.delete(`${apiEndpoint}/todos/${todoId}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${idToken}`
-    }
-  })
+
+//upload File
+export async function uploadFile(uploadUrl: string, file: Buffer): Promise<void> {
+  await Axios.put(uploadUrl, file)
 }
 
+//GetUploadUrl
 export async function getUploadUrl(
   idToken: string,
   todoId: string
@@ -66,8 +78,4 @@ export async function getUploadUrl(
     }
   })
   return response.data.uploadUrl
-}
-
-export async function uploadFile(uploadUrl: string, file: Buffer): Promise<void> {
-  await Axios.put(uploadUrl, file)
 }
