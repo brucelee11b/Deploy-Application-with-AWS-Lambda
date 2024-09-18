@@ -1,15 +1,15 @@
-import Axios from 'axios'
 import jsonwebtoken from 'jsonwebtoken'
-import { createLogger } from '../../utils/logger.mjs'
+import { createLogInfo } from '../../log-info/LogUtils.mjs'
 
-const logger = createLogger('auth')
-
-const jwksUrl = 'https://test-endpoint.auth0.com/.well-known/jwks.json'
+const certificate = process.env.AUTH0_CERTIFICATE
+const log = createLogInfo('auth')
 
 export async function handler(event) {
   try {
     const jwtToken = await verifyToken(event.authorizationToken)
-
+    log.info('Authenticated!', {
+      userId: jwtToken.sub
+    })
     return {
       principalId: jwtToken.sub,
       policyDocument: {
@@ -24,8 +24,7 @@ export async function handler(event) {
       }
     }
   } catch (e) {
-    logger.error('User not authorized', { error: e.message })
-
+    log.error('Not authorized!', { error: e.message })
     return {
       principalId: 'user',
       policyDocument: {
@@ -46,15 +45,18 @@ async function verifyToken(authHeader) {
   const token = getToken(authHeader)
   const jwt = jsonwebtoken.decode(token, { complete: true })
 
-  // TODO: Implement token verification
-  return undefined;
+  try {
+    jsonwebtoken.verify(token, certificate, { algorithms: ['RS256'] })
+  } catch (err) {
+    console.log('Verify error', err)
+  }
+  return jwt
 }
 
 function getToken(authHeader) {
-  if (!authHeader) throw new Error('No authentication header')
-
+  if (!authHeader) throw new Error('No header for authen!')
   if (!authHeader.toLowerCase().startsWith('bearer '))
-    throw new Error('Invalid authentication header')
+    throw new Error('Invalid header for authen!')
 
   const split = authHeader.split(' ')
   const token = split[1]
